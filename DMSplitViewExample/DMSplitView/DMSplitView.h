@@ -8,6 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
+/** Describe the state of subview */
+enum {
+    /** state of subview is collapsed */
+    DMSplitViewStateCollapsed   = 0,
+    /** state of subview is expanded */
+    DMSplitViewStateExpanded    = 1
+}; typedef NSUInteger DMSplitViewState;
+
+
 @class DMSplitView;
 @protocol DMSplitViewDelegate <NSObject>
 @optional
@@ -24,18 +33,12 @@
  */
 - (void) splitView:(DMSplitView *)splitView divider:(NSInteger) dividerIndex movedAt:(CGFloat) newPosition;
 
-/** A subview previously expanded is now collapsed
+/** A subview previously expanded is now collapsed or viceversa
  @param splitView       target MKSplitView instance
  @param subviewIndex    index of target subview
+ @param newState        DMSplitViewStateCollapsed (collapsed) or DMSplitViewStateExpanded (expanded)
  */
-- (void) splitView:(DMSplitView *)splitView subviewIsCollapsed:(NSUInteger) subviewIndex;
-
-/** A subview previously collpased is now expanded
- @param splitView       target MKSplitView instance
- @param subviewIndex    index of target subview
- */
-- (void) splitView:(DMSplitView *)splitView subviewIsExpanded:(NSUInteger) subviewIndex;
-
+- (void) splitView:(DMSplitView *)splitView subview:(NSUInteger) subviewIndex stateChanged:(DMSplitViewState) newState;
 @end
 
 /** DMSplitView behavior */
@@ -47,7 +50,6 @@ enum {
 	/** Resize all subviews by distributing equal shares of space simultaeously */
 	DMSplitViewResizeModeUniform			= 2
 }; typedef NSUInteger DMSplitViewResizeMode;
-
 
 /** DMSplitView is a revisited version of the standard OSX's NSSplitView control.
  The e problem with NSSplitView is that some things which should be simple require implementing unintuitive delegate methods, which gets to be pretty annoying.

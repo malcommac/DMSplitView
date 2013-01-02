@@ -675,10 +675,16 @@
         BOOL isCollapsing = (subviewsStates[dividerIndex] > 0) && (newPosition == 0);
         BOOL isExpanding = (subviewsStates[dividerIndex] == 0) && (newPosition > 0);
         
-        if (isCollapsing && [self.eventsDelegate respondsToSelector:@selector(splitView:subviewIsCollapsed:)])
-            [self.eventsDelegate splitView:self subviewIsCollapsed:dividerIndex];
-        else if (isExpanding && [self.eventsDelegate respondsToSelector:@selector(splitView:subviewIsExpanded:)])
-            [self.eventsDelegate splitView:self subviewIsExpanded:dividerIndex];
+        if ([self.eventsDelegate respondsToSelector:@selector(splitView:subview:stateChanged:)]) {
+            if (isCollapsing)
+                [self.eventsDelegate splitView:self
+                                       subview:dividerIndex
+                                  stateChanged:DMSplitViewStateCollapsed];
+            if (isExpanding)
+                [self.eventsDelegate splitView:self
+                                       subview:dividerIndex
+                                  stateChanged:DMSplitViewStateCollapsed];
+        }
     }
     
     [self updateSubviewsState];
