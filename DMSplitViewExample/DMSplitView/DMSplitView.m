@@ -53,7 +53,8 @@
     NSMutableArray*         subviewContraints;
     NSMutableDictionary*    viewsToCollapseByDivider;
     CGFloat*                lastValuesBeforeCollapse;
-    
+    CGFloat*                subviewsStates;
+
     // override divider thickneess
     CGFloat                 oDividerThickness;
     BOOL                    dividerThicknessOverriden;
@@ -102,7 +103,8 @@
     viewsToCollapseByDivider = [[NSMutableDictionary alloc] init];
     subviewContraints = [[NSMutableArray alloc] init];
     lastValuesBeforeCollapse = calloc(sizeof(CGFloat)*self.subviews.count, 1);
-    
+    subviewsStates = calloc(sizeof(CGFloat)*self.subviews.count, 1);
+
     for (NSUInteger k = 0; k < self.subviews.count; k++)
         [subviewContraints addObject:[[DMSubviewConstraint alloc] init]];
 }
@@ -662,10 +664,29 @@
     if (!isAnimating && newPosition != 0)
         lastValuesBeforeCollapse[dividerIndex] = newPosition;
     
-    if (isAnimating == NO && [self.eventsDelegate respondsToSelector:@selector(splitView:divider:movedAt:)])
-        [self.eventsDelegate splitView:self
-                               divider:dividerIndex
-                               movedAt:newPosition];
+    if (!isAnimating) {
+        if ([self.eventsDelegate respondsToSelector:@selector(splitView:divider:movedAt:)])
+            [self.eventsDelegate splitView:self
+                                   divider:dividerIndex
+                                   movedAt:newPosition];
+        
+        BOOL isCollapsing = (subviewsStates[dividerIndex] > 0) && (newPosition == 0);
+        BOOL isExpanding = (subviewsStates[dividerIndex] == 0) && (newPosition > 0);
+        
+        if (isCollapsing && [self.eventsDelegate respondsToSelector:@selector(splitView:subviewIsCollapsed:)])
+            [self.eventsDelegate splitView:self subviewIsCollapsed:dividerIndex];
+        else if (isExpanding && [self.eventsDelegate respondsToSelector:@selector(splitView:subviewIsExpanded:)])
+            [self.eventsDelegate splitView:self subviewIsExpanded:dividerIndex];
+    }
+    
+    [self updateSubviewsState];
+}
+
+- (void) updateSubviewsState {
+    [self.subviews enumerateObjectsUsingBlock:^(NSView* subview, NSUInteger subviewIndex, BOOL *stop) {
+        CGFloat size = ([self isSubviewCollapsed:subview] ? 0.0 : (self.isVertical ? NSWidth(subview.frame) : NSHeight(subview.frame)));
+        subviewsStates[subviewIndex] = size;
+    }];
 }
 
 #pragma mark - Working with subview's sizes

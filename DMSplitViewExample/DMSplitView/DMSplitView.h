@@ -24,6 +24,18 @@
  */
 - (void) splitView:(DMSplitView *)splitView divider:(NSInteger) dividerIndex movedAt:(CGFloat) newPosition;
 
+/** A subview previously expanded is now collapsed
+ @param splitView       target MKSplitView instance
+ @param subviewIndex    index of target subview
+ */
+- (void) splitView:(DMSplitView *)splitView subviewIsCollapsed:(NSUInteger) subviewIndex;
+
+/** A subview previously collpased is now expanded
+ @param splitView       target MKSplitView instance
+ @param subviewIndex    index of target subview
+ */
+- (void) splitView:(DMSplitView *)splitView subviewIsExpanded:(NSUInteger) subviewIndex;
+
 @end
 
 /** DMSplitView behavior */
