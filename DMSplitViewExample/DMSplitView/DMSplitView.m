@@ -477,18 +477,20 @@
 	for (NSView *subview in self.subviews) {
 		NSRect viewFrame = subview.frame;
 		NSPoint viewOrigin = viewFrame.origin;
-		viewOrigin.x = offset;
+		
+        if (self.isVertical)    viewOrigin.x = offset;
+        else                    viewOrigin.y = offset;
 		[subview setFrameOrigin:viewOrigin];
-		offset += viewFrame.size.width + self.dividerThickness;
+		offset += (self.isVertical ? viewFrame.size.width :viewFrame.size.height) + self.dividerThickness;
         k++;
-
+        
         // When a subview is collapsed NSSplitView set it's hidden property as YES
         // So we need to set it as visible if we set as uncollapsed programmatically, otherwise we will see
         // a blank space instead of our superview
-        [subview setHidden:!(subview.frame.size.width > 0)];
+        if (self.isVertical)    [subview setHidden:!(subview.frame.size.width > 0)];
+        else    [subview setHidden:!(subview.frame.size.height > 0)];
 	}
 }
-
 
 #pragma mark - Additional Methods
 
