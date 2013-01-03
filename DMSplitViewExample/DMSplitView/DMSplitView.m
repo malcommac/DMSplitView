@@ -646,8 +646,6 @@
     CGFloat newValue;
     if (isCollapsed) {
         newValue = lastValuesBeforeCollapse[dividerIndex];
-        NSLog(@"Toggle %ld to: old value %f",dividerIndex,newValue);
-
     } else {
         if (subviewIndex == 0)
             newValue = 0.0f;
