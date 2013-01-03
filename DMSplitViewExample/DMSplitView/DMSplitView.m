@@ -562,9 +562,9 @@
         NSInteger index = [indexObject integerValue];
         CGFloat  newPosition = [[newPositions objectAtIndex:[indexes indexOfObject:indexObject]] doubleValue];
         
-        if (newPosition == 0.0f) // save current position for restore after collapsing
-            lastValuesBeforeCollapse[index] = [self positionOfDividerAtIndex:index];
-
+        // save divider state where necessary
+        [self saveCurrentDivididerState];
+        
         if (self.isVertical) {
             CGFloat oldMaxXOfRightHandView = NSMaxX(newRect[index + 1]);
             newRect[index].size.width = newPosition - NSMinX(newRect[index]);
@@ -641,13 +641,24 @@
     if (subviewIndex != 0 && subviewIndex != self.subviews.count-1) return NO;
     BOOL isCollapsed = [self isSubviewCollapsed:self.subviews[subviewIndex]];
     
+    NSView *subview = self.subviews[subviewIndex];
+    NSInteger dividerIndex = (subviewIndex == 0 ? subviewIndex : subviewIndex-1);
     CGFloat newValue;
-    if (isCollapsed)
-        newValue = lastValuesBeforeCollapse[subviewIndex];
-    else
-        newValue = (subviewIndex == 0 ? 0.0f : [self positionOfDividerAtIndex:subviewIndex-1]+NSWidth(((NSView*)self.subviews[subviewIndex-1]).frame));
-    
-    [self setPosition:newValue ofDividerAtIndex:subviewIndex animated:animated completitionBlock:nil];
+    if (isCollapsed) {
+        newValue = lastValuesBeforeCollapse[dividerIndex];
+        NSLog(@"Toggle %ld to: old value %f",dividerIndex,newValue);
+
+    } else {
+        if (subviewIndex == 0)
+            newValue = 0.0f;
+        else {
+            newValue = [self positionOfDividerAtIndex:dividerIndex];
+            newValue += (self.isVertical ? NSWidth(subview.frame) : NSHeight(subview.frame));
+        }
+    }
+    [self setPosition:newValue
+     ofDividerAtIndex:dividerIndex
+             animated:animated completitionBlock:nil];
     return isCollapsed;
 }
 
@@ -658,14 +669,23 @@
 
 #pragma mark - Other Events of the delegate
 
+- (void) saveCurrentDivididerState {
+    for (NSUInteger k=0; k<self.subviews.count-1; k++) {
+        CGFloat position = [self positionOfDividerAtIndex:k];
+        BOOL isCollapsedLeft = (position == 0);
+        BOOL isCollapsedRight = (position == (self.isVertical ? NSWidth(self.frame) : NSHeight(self.frame))- self.dividerThickness);
+        if (!isCollapsedLeft && !isCollapsedRight)
+            lastValuesBeforeCollapse[k] = position;
+    }
+}
+
 - (void)splitViewDidResizeSubviews:(NSNotification *)notification {
     NSUInteger dividerIndex = ((NSString*)notification.userInfo[@"NSSplitViewDividerIndex"]).integerValue;
     CGFloat newPosition = [self positionOfDividerAtIndex:dividerIndex];
     
     // used to restore from collapse state; we want to save it before animating, not while animating and finally we won't save collapsed state
-    if (!isAnimating && newPosition != 0)
-        lastValuesBeforeCollapse[dividerIndex] = newPosition;
-    
+    if (!isAnimating) [self saveCurrentDivididerState];
+
     if (!isAnimating) {
         if ([self.eventsDelegate respondsToSelector:@selector(splitView:divider:movedAt:)])
             [self.eventsDelegate splitView:self
