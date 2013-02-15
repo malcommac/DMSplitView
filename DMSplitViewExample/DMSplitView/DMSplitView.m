@@ -705,7 +705,7 @@
             if (isExpanding)
                 [self.eventsDelegate splitView:self
                                        subview:dividerIndex
-                                  stateChanged:DMSplitViewStateCollapsed];
+                                  stateChanged:DMSplitViewStateExpanded];
         }
     }
     
