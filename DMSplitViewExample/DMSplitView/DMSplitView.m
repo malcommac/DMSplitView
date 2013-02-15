@@ -342,6 +342,10 @@
         if (deltaPerSubview < 0) deltaPerSubview = floor(deltaPerSubview);
         else if (deltaPerSubview > 0) deltaPerSubview = ceil(deltaPerSubview);
         
+        // guard looping from unexpected calculation
+        if (isinf(deltaPerSubview))
+            break;
+            
         // Resize each of the subviews by a uniform amount (may be off by a teen bit in the last one due to rounding)
         [subviewContraints enumerateObjectsUsingBlock:^(DMSubviewConstraint *constraint, NSUInteger subviewIndex, BOOL *stop) {
             BOOL isSubviewResizable = resizableSubviews[subviewIndex];
