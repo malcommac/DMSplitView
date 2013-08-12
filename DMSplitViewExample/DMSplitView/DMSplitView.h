@@ -4,6 +4,7 @@
 //
 //  Created by Daniele Margutti (me@danielemargutti.com) on 12/21/12.
 //  Copyright (c) 2012 http://www.danielemargutti.com. All rights reserved.
+//	Licensed under MIT License
 //
 
 #import <Cocoa/Cocoa.h>
