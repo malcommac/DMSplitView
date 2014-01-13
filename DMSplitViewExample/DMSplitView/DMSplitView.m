@@ -62,6 +62,17 @@
     
     CGFloat                 collapsedSubviewDimension;
     BOOL                    isAnimating; // an animation is in progress
+	
+	// delta adjustment needed because the original thickness of a NSSplitView created with the xib is 1
+	// and the subviews are sized consequently so the thickness is changed programmatically,
+	// before resizing the subviews proportionally I have to consider this delta adjustment.
+	// now this adjustment is calculated in the dividerThickness setter, but it works just
+	// when the original thickness used to create the initial subviews frame is equal to 1
+	// (like in the xib)
+	// another way to calculate this delta (stronger but more expensive) may be to caulculate
+	// every time in "applyProportionalResizeFromOldSize:" the total size of the subviews
+	// obtaining the delta adjustment with totalSize-oldsize
+	CGFloat					deltaAdjustmentForDividerThickness;
 }
 @end
 
@@ -98,8 +109,9 @@
     self.subviewsResizeMode = DMSplitViewResizeModeProportional;
     
     dividerThicknessOverriden = NO;
-    oDividerThickness = 0.0f;
-    
+    oDividerThickness = 1.0f;
+    deltaAdjustmentForDividerThickness = 0;
+	
     priorityIndexes = [[NSMutableDictionary alloc] init];
     viewsToCollapseByDivider = [[NSMutableDictionary alloc] init];
     subviewContraints = [[NSMutableArray alloc] init];
@@ -139,6 +151,7 @@
 }
 
 - (void) setDividerThickness:(CGFloat)newDividerThickness {
+	deltaAdjustmentForDividerThickness += (newDividerThickness-oDividerThickness)*(self.subviews.count-1);
     oDividerThickness = newDividerThickness;
     dividerThicknessOverriden = YES;
     [self setNeedsDisplay:YES];
@@ -164,6 +177,11 @@
 
 
 #pragma mark - Appearance Drawing Routines
+
+-(void)drawRect:(NSRect)dirtyRect {
+	if (dividerColor.alphaComponent > 0)
+		[super drawRect:dirtyRect];
+}
 
 - (void)drawDividerInRect:(NSRect)aRect {
     if (self.shouldDrawDivider) {
@@ -384,6 +402,11 @@
     NSSize splitViewNewSize = self.bounds.size;
     __block CGFloat deltaValue = (self.isVertical ?  (splitViewNewSize.width-splitViewOldSize.width) : (splitViewNewSize.height-splitViewOldSize.height));
     
+	if (deltaAdjustmentForDividerThickness != 0) {
+		deltaValue -= deltaAdjustmentForDividerThickness;
+		deltaAdjustmentForDividerThickness = 0;
+	}
+	
     __block NSUInteger numberOfResizableSubviews = 0;
     CGFloat oldResizableSubviewsWidth = 0;
     
@@ -408,7 +431,6 @@
     }];
     
     /* Proportionally increment/decrement subview size. Need to loop because if we hit min/max of a subview, there'll be left over delta. */
-
     while (fabs(deltaValue)) {
         __block CGFloat remainingDeltaValue = deltaValue;
         
@@ -422,6 +444,7 @@
             newSize +=  subviewDelta;
             if (constraint.minSize > 0.0f) newSize = MAX(constraint.minSize,newSize);
             if (constraint.maxSize > 0.0f) newSize = MIN(constraint.maxSize,newSize);
+						
             subviewsSizes[subviewIndex] = newSize;
             
             // reduce delta
@@ -429,6 +452,30 @@
             if (fabs(remainingDeltaValue) <= 0.5f)
                 *stop = YES;
         }];
+		
+		// avoid loop (for example if the remaining value is 1 and no one subview has a proportion greather that 0.5, each subviewDelta will be 0 and we have a loop)
+		if (deltaValue != 0.0f && deltaValue == remainingDeltaValue) {
+			// find the subview with the bigger proportion that can be resized with the remaining delta value
+			__block NSUInteger subviewIndexToResize = 0;
+			__block CGFloat maxProportion = 0;
+			[subviewContraints enumerateObjectsUsingBlock:^(DMSubviewConstraint* constraint, NSUInteger subviewIndex, BOOL *stop) {
+				if (subviewsProportions[subviewIndex] > maxProportion) {
+					CGFloat oldSize = subviewsSizes[subviewIndex];
+					CGFloat newSize = oldSize;
+					newSize += remainingDeltaValue;
+					// check if it has enough space
+					if ((constraint.minSize == 0.0f || newSize >= constraint.minSize) &&
+						(constraint.maxSize == 0.0f || newSize < constraint.maxSize)) {
+						maxProportion = subviewsProportions[subviewIndex];
+						subviewIndexToResize = subviewIndex;
+					}
+				}
+			}];
+			// resize this subview
+			subviewsSizes[subviewIndexToResize] += remainingDeltaValue;
+			remainingDeltaValue -= remainingDeltaValue;
+		}
+			
         deltaValue = remainingDeltaValue;
     }
     
@@ -439,7 +486,12 @@
 - (void) applyPriorityResizeFromOldSize:(CGSize) splitViewOldSize {
     __block CGFloat deltaValue = (self.isVertical ?  (self.bounds.size.width-splitViewOldSize.width) :
                                                      (self.bounds.size.height-splitViewOldSize.height));
-
+	
+	if (deltaAdjustmentForDividerThickness != 0) {
+		deltaValue -= deltaAdjustmentForDividerThickness;
+		deltaAdjustmentForDividerThickness = 0;
+	}
+	
     for (NSNumber *priorityIndex in [[priorityIndexes allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         NSNumber *subviewIndex = [priorityIndexes objectForKey:priorityIndex];
         if (subviewIndex.integerValue >= self.subviews.count)
@@ -507,7 +559,8 @@
         else
             targetSize = NSMakeSize(NSWidth(self.bounds), subviewsSizes[subviewIndex]);
         [subview setFrameSize:targetSize];
-    }];
+	}];
+	
     [self layoutSubviews];
 }
 
