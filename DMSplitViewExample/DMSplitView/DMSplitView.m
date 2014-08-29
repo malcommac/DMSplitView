@@ -293,9 +293,7 @@
 	}
 	
 	CGFloat minimumSize = constraintShrinkingSubview.minSize;
-    CGFloat maximumSize = (constraintGrowingSubview.maxSize == 0) ? INT_MAX : constraintGrowingSubview.maxSize;
-	CGFloat finalCoordinate = fmin(currentCoordinate + (shrinkingSize - minimumSize), maximumSize);
-    return finalCoordinate;
+    return (constraintGrowingSubview.maxSize == 0) ? currentCoordinate + (shrinkingSize - minimumSize) : constraintGrowingSubview.maxSize;
 }
 
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
