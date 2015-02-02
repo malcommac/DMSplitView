@@ -1,6 +1,21 @@
-
-DMSplitViewExample/.DS_Store
-
-DMSplitViewExample/DMSplitViewExample.xcodeproj/project.xcworkspace/xcuserdata/daniele.xcuserdatad/UserInterfaceState.xcuserstate
-
+#Mac Specific
 .DS_Store
+*~
+
+#DotFiles in general, they shouldn't be shared,
+#unless you're specifically sharing
+.*
+
+# Xcode Specific
+#
+# Non code-specific directories & Temporary Directories
+Build/
+DerivedData/
+
+# Xcode Workspace / Project Metadata
+xcuserdata/
+*.xcuserstate
+
+# Xcode version control related
+*.xccheckout
+*.moved-aside
