@@ -137,6 +137,10 @@
     [self setNeedsDisplay:YES];
 }
 
+- (NSColor *) dividerColor{
+    return dividerColor;
+}
+
 - (void) setDividerColor:(NSColor *)newDividerColor {
     if (newDividerColor != dividerColor) {
         dividerColor = newDividerColor;
