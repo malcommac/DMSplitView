@@ -1,11 +1,13 @@
 Pod::Spec.new do |s|
-  s.name         = "DMSplitViewOSX"
+  s.name         = "DMSplitView"
   s.version      = "0.0.1"
   s.summary      = "Powerful NSSplitView subclass with animated transitions"
 
   s.homepage     = "https://github.com/malcommac"
   s.license      = { :type => "MIT", :text => "DMSplitView is licensed under the MIT license." }
   s.platform     = :osx
+  s.osx.deployment_target = '10.10'
+  
   s.author       = { "Daniele Margutti" => "me@danielemargutti.com" }
 
   s.source       = { :git => "https://github.com/malcommac/DMSplitView.git", :tag => '0.0.1'}
