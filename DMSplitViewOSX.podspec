@@ -6,6 +6,8 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/malcommac"
   s.license      = { :type => "MIT", :text => "DMSplitView is licensed under the MIT license." }
   s.platform     = :osx
+  s.osx.deployment_target = '10.10'
+  
   s.author       = { "Daniele Margutti" => "me@danielemargutti.com" }
 
   s.source       = { :git => "https://github.com/malcommac/DMSplitView.git", :tag => '0.0.1'}
